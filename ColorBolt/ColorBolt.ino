@@ -17,7 +17,14 @@
 #else
 #define LED_ON  (1)
 #define LED_OFF (0)
-#endif RGB_NEGATIVE_LOGIC
+#endif //RGB_NEGATIVE_LOGIC
+
+#define NR_OF_MODES  (3)
+//0 = off, 1 = on, 2 = blink
+#define NR_OF_COLORS  (8)
+//0 = off, 1 = white, 2 = red
+//3 = green, 4 = blue, 5 = yellow
+//6 = cyan, 7 = pink
 
 #define RED1    (12)
 #define GREEN1  (11)
@@ -30,6 +37,7 @@
 #define BLUE3   (4)
 #define SWITCH1 (3)
 #define SWITCH2 (2)
+#define POT1    (A7)
 
 #define DEBOUNCE_DELAY (50)
 
@@ -38,6 +46,7 @@ int sw2_state = HIGH;
 int sw1_last_state = HIGH;
 int sw2_last_state = HIGH;
 int all_led_state = 1;
+int pot_value = 0;
 
 unsigned long sw1_press_time = 0;
 unsigned long sw2_press_time = 0;
@@ -92,33 +101,76 @@ void setup()
   Serial.begin(9600);
   Serial.println("Setup ready!");
   #endif //SERIAL_DEBUG
+  analogReference(DEFAULT);
+  //analogReadResolution(10);
 }
+int mode_select = 0;  //off
+int color_select = 0; //none (1-9)
+
+int old_mode = 0;
+int old_color = 0;
 
 void loop() {
+  /*************/
+  /* Get mode  */
+  /*************/
   sw1_state = digitalRead(SWITCH1);
-  if(sw1_state != sw1_last_state)
+  delay(100);
+  if(!sw1_state)
   {
-    sw1_press_time = millis();
+    mode_select = ((mode_select + 1) % NR_OF_MODES);
+
   }
-  if((millis() - sw1_press_time) > DEBOUNCE_DELAY)
+  
+  /*************/
+  /* Get color */
+  /*************/
+  sw2_state = digitalRead(SWITCH2);
+  delay(100);
+  if(!sw2_state)
   {
-    if(sw1_state != sw1_last_state)
+    color_select = ((color_select + 1) % NR_OF_COLORS);
+  }
+
+  //handle mode change
+  if(old_mode != mode_select)
+  {
+    //mode selection changed
+    if(mode_select = LEDS_BLINK)
     {
-      sw1_last_state = sw1_state;
+      start_blinking();
+    }
+    else
+    {
+      stop_blinking();
     }
   }
 
-  
-  //sw2_state = digitalRead(SWITCH2);
-  
-  if(!sw1_state)
+  //calculate led color
+  if(old_color != color_select)
   {
-    all_led_state ^= 1;
+    //color selection changed
+  }
 
-  }
-  if(!sw2_state)
+  //
+  
+  /********************/
+  /* Set pot function */
+  /********************/
+  if (mode_select == LEDS_OD)
   {
+    pot_mode = DUTY_CYCLE_ADJUSTMENT;
   }
+  else if (mode_select == LEDS_BLINK)
+  {
+    pot_mode = BLINK_FREQ_ADJUSTMENT;
+  }
+  
   set_all_leds(all_led_state);  
   // put your main code here, to run repeatedly
+/*
+  pot_value = analogRead(POT1);
+  Serial.println(pot_value);
+  delay(100);
+*/
 }
