@@ -109,64 +109,34 @@ int color_select = 0; //none (1-9)
 
 int old_mode = 0;
 int old_color = 0;
+unsigned long sw1_read_time = 0;
+int sw1_old_state = HIGH;
+int sw1_read = 0;
+int sw_state = 1;
 
 void loop() {
   /*************/
   /* Get mode  */
   /*************/
-  sw1_state = digitalRead(SWITCH1);
-  delay(100);
-  if(!sw1_state)
+  sw1_read = digitalRead(SWITCH1);
+  if(sw1_old_state != sw1_read) 
   {
-    mode_select = ((mode_select + 1) % NR_OF_MODES);
-
+    sw1_read_time = millis();//record press time
   }
-  
-  /*************/
-  /* Get color */
-  /*************/
-  sw2_state = digitalRead(SWITCH2);
-  delay(100);
-  if(!sw2_state)
+  if(millis() > (sw1_read_time + 50))
   {
-    color_select = ((color_select + 1) % NR_OF_COLORS);
-  }
-
-  //handle mode change
-  if(old_mode != mode_select)
-  {
-    //mode selection changed
-    if(mode_select = LEDS_BLINK)
+    if(sw1_read != sw1_state)
     {
-      start_blinking();
-    }
-    else
-    {
-      stop_blinking();
+      sw1_state = sw1_read;
+      if(!sw_state)
+      {
+        all_led_state ^= 1;
+      }
     }
   }
-
-  //calculate led color
-  if(old_color != color_select)
-  {
-    //color selection changed
-  }
-
-  //
+  set_all_leds(all_led_state);
   
-  /********************/
-  /* Set pot function */
-  /********************/
-  if (mode_select == LEDS_OD)
-  {
-    pot_mode = DUTY_CYCLE_ADJUSTMENT;
-  }
-  else if (mode_select == LEDS_BLINK)
-  {
-    pot_mode = BLINK_FREQ_ADJUSTMENT;
-  }
-  
-  set_all_leds(all_led_state);  
+  sw1_old_state = sw1_read; 
   // put your main code here, to run repeatedly
 /*
   pot_value = analogRead(POT1);
