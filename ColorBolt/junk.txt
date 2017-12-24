@@ -1,0 +1,41 @@
+ /*************/
+  /* Get mode  */
+  /*************/
+  sw1_read = digitalRead(SWITCH1);
+  if(sw1_old_state != sw1_read) 
+  {
+    sw1_read_time = millis();//record press time
+  }
+  if(millis() > (sw1_read_time + 50))
+  {
+    if(sw1_read != sw1_state)
+    {
+      sw1_state = sw1_read;
+      if(!sw_state)
+      {
+        all_led_state ^= 1;
+      }
+    }
+  }
+  set_all_leds(all_led_state);
+  
+  sw1_old_state = sw1_read; 
+  // put your main code here, to run repeatedly
+/*
+  pot_value = analogRead(POT1);
+  Serial.println(pot_value);
+  delay(100);
+*/
+
+void setup() 
+{
+  // put your setup code here, to run once:
+  led_setup();
+  switch_setup();
+  #if SERIAL_DEBUG
+  Serial.begin(9600);
+  Serial.println("Setup ready!");
+  #endif //SERIAL_DEBUG
+  analogReference(DEFAULT);
+  //analogReadResolution(10);
+}
