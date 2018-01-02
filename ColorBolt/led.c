@@ -30,23 +30,33 @@
 #define LED_ON  (1)
 #define LED_OFF (0)
 #endif //RGB_NEGATIVE_LOGIC
+#define ANALOG_CONTROL (1)
 
 static void set_led_red(unsigned char led_power)
 {
-  //digitalWrite(RED1,LED_ON); digitalWrite(RED2,LED_ON); digitalWrite(RED3,LED_ON);
+  #if ANALOG_CONTROL
   analogWrite(RED1,led_power); analogWrite(RED2,led_power); analogWrite(RED3,led_power);
+  #else
+  digitalWrite(RED1,LED_ON); digitalWrite(RED2,LED_ON); digitalWrite(RED3,LED_ON);
+  #endif //ANALOG_CONTROL
 }
 
 static void set_led_green(unsigned char led_power)
 {
-  //digitalWrite(GREEN1,LED_ON); digitalWrite(GREEN2,LED_ON); digitalWrite(GREEN3,LED_ON);
+  #if ANALOG_CONTROL
   analogWrite(GREEN1,led_power); analogWrite(GREEN2,led_power); analogWrite(GREEN3,led_power);
+  #else
+  digitalWrite(GREEN1,LED_ON); digitalWrite(GREEN2,LED_ON); digitalWrite(GREEN3,LED_ON);
+  #endif //ANALOG_CONTROL
 }
 
 static void set_led_blue(unsigned char led_power)
 {
-  //digitalWrite(BLUE1,LED_ON); digitalWrite(BLUE2,LED_ON); digitalWrite(BLUE3,LED_ON);
+  #if ANALOG_CONTROL
   analogWrite(BLUE1,led_power); analogWrite(BLUE2,led_power); analogWrite(BLUE3,led_power);
+  #else
+  digitalWrite(BLUE1,LED_ON); digitalWrite(BLUE2,LED_ON); digitalWrite(BLUE3,LED_ON);
+  #endif //ANALOG_CONTROL
 }
 
 void led_setup(void)
@@ -71,8 +81,8 @@ void set_all_leds(unsigned char led_state)
 void led_control(unsigned char color, unsigned char led_mode, unsigned char led_power)
 {
   #if RGB_NEGATIVE_LOGIC
-  //led_power = map(led_power, 0, 255, 255, 0);
-  led_power = 127;
+  led_power = 255 - led_power;
+  //led_power = 127;
   #endif
   
   if(led_mode == 0)
@@ -85,11 +95,13 @@ void led_control(unsigned char color, unsigned char led_mode, unsigned char led_
     {
       case RED:
         set_all_leds(LED_OFF);
+        //Serial.println("red");
         set_led_red(led_power);
       break;
       
       case GREEN:
         set_all_leds(LED_OFF);
+        //Serial.println("green");
         set_led_green(led_power);
       break;
       
