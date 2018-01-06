@@ -63,6 +63,7 @@ void loop()
   static unsigned char color_select = DEFAULT_COLOR;
   static unsigned char old_mode = mode_select;
   static unsigned char old_color = color_select;
+  static unsigned long blink_timestamp = 0;
     
   //reading of switch (digital) and potentiometer (analog) values
   sw1_read = digitalRead(SWITCH1);
@@ -111,10 +112,16 @@ void loop()
   
       case(MODE_BLINK):
         //power value is to max while blinking
-        //temp_mode = ON / OFF, it's toggled every cycle
-        led_control(color_select, temp_mode, 255); 
-        temp_mode ^= 1;
-        delay(pot_value);
+        //If blink delay time expired do the following: 
+        //1. record timestamp used for next toggle
+        //2. run led control
+        //3. toggle temp_mode (ON / OFF)
+        if((millis() - blink_timestamp) >= pot_value)
+        {
+          blink_timestamp = millis();
+          led_control(color_select, temp_mode, 255);
+          temp_mode ^= 1;
+        }
       break;
 
       default:
