@@ -55,32 +55,66 @@ void setup()
 void loop() 
 {
   //local variable declarations
-  unsigned char sw1_read = 0;
+  unsigned char sw1_read = 1;
   unsigned char sw2_read = 0;
   //static is necessary to retain the value of local variable after exiting the function
+  static unsigned char old_sw1 = 1;
+  static unsigned char old_sw2 = 1;;
+  static unsigned char sw1_state = 1;
+  static unsigned char sw2_state = 1;
   static unsigned char temp_mode = 0;
   static unsigned char mode_select = 0;
   static unsigned char color_select = DEFAULT_COLOR;
   static unsigned char old_mode = mode_select;
   static unsigned char old_color = color_select;
   static unsigned long blink_timestamp = 0;
+  static unsigned long sw1_debounce = 0;
+  static unsigned long sw2_debounce = 0;
     
-  //reading of switch (digital) and potentiometer (analog) values
+  //Reading of switch (digital) values
+  //Switch1 handling: reading, debouncing, setting mode if necessary
   sw1_read = digitalRead(SWITCH1);
-  delay(DEBOUNCE_DELAY);
-  if(!sw1_read)
+  //if switch press or noise record timestamp
+  if(old_sw1 != sw1_read)
   {
-    mode_select = (mode_select + 1) % NR_OF_MODES;  //toggle between 0 - NR_OF_MODES
+    sw1_debounce = millis();
   }
+  //if time expired check if switch state realy changed, if yes update state
+  if ((millis() - sw1_debounce) > DEBOUNCE_DELAY)
+  {
+    if(sw1_read != sw1_state)
+    {
+      sw1_state = sw1_read;
+      if(!sw1_state)
+      {
+        mode_select = (mode_select + 1) % NR_OF_MODES;  //toggle between 0 - NR_OF_MODES
+      }     
+    }
+  }
+  old_sw1 = sw1_read;
   
+  //Switch2 handling: reading, debouncing, setting color if necessary
   sw2_read = digitalRead(SWITCH2);
-  delay(DEBOUNCE_DELAY);
-  if(!sw2_read)
+  if(old_sw2 != sw2_read)
   {
-    color_select = (color_select + 1) % NR_OF_COLORS; //toggle between 0 - NR_OF_COLORS
-    if(color_select == 0) { color_select = 1; }  //ignore color = 0, we have mode = 0 to turn off LEDs
+    sw2_debounce = millis();
   }
+  if ((millis() - sw2_debounce) > DEBOUNCE_DELAY)
+  {
+    if(sw2_read != sw2_state)
+    {
+      sw2_state = sw2_read;
+      if(!sw2_state)
+      {
+        color_select = (color_select + 1) % NR_OF_COLORS; //toggle between 0 - NR_OF_COLORS
+        if(color_select == 0) { color_select = 1; }  //ignore color = 0, we have mode = 0 to turn off LEDs
+      }     
+    }
+  }
+  old_sw2 = sw2_read;
 
+  
+  //Reading of potentiometer (analog) value
   pot_value = analogRead(POT1);
   
   if(//Start LED processing if one of the following conditions are TRUE:
