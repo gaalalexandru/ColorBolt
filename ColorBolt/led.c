@@ -32,6 +32,7 @@
 #endif //RGB_NEGATIVE_LOGIC
 #define ANALOG_CONTROL (1)
 
+//static (local) function definitions (are only used in this file)
 static void set_led_red(unsigned char led_power)
 {
   #if ANALOG_CONTROL
@@ -59,6 +60,7 @@ static void set_led_blue(unsigned char led_power)
   #endif //ANALOG_CONTROL
 }
 
+//external function definitions (used in other modules / files)
 void led_setup(void)
 {
   unsigned char index = 0;
@@ -79,6 +81,10 @@ void set_all_leds(unsigned char led_state)
 }
 
 void led_control(unsigned char color, unsigned char led_mode, unsigned char led_power)
+//Paremeters for led control:
+//1. color = the selected color 1 - 7
+//2. led_mode = the state for all leds, ON / OFF
+//3. led_power = the 8 bit duty cycle for PWM output signal
 {
   #if RGB_NEGATIVE_LOGIC
   led_power = 255 - led_power;

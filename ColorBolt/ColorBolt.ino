@@ -6,6 +6,7 @@
 
 // Include & Defines secion
 #include "led.h"
+#include "soft_pwm.h"
 
 //Pin mapping for switches and pot
 #define SWITCH1 (3)
@@ -43,6 +44,7 @@ void setup()
   led_setup();
   switch_setup();
   
+  setup_soft_pwm();
   //Make first analog read to initialize old_pot since initial POT position is unknown
   pot_value = analogRead(POT1);
   old_pot = pot_value;
