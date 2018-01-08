@@ -1,71 +1,92 @@
 //soft_pwm.c
 
 #include "soft_pwm.h"
-#define SOFT_PWM_COUNT (4)
+#include "config.h"
 
-// typedef for properties of each sw pwm pin
-typedef struct pwmPins {
-  int pin;
-  int pwmValue;
-  bool pinState;
-  int pwmTickCount;
-} pwmPin;
+unsigned char pwm_width[SOFT_PWM_CHMAX];
+volatile unsigned char pwm_width_buffer[SOFT_PWM_CHMAX];
+const unsigned char pins[SOFT_PWM_CHMAX] = {4,7,8,12}; //Blue3 , Blue2, Green2, Red2
 
-const int pinCount = 4;
-const byte pins[SOFT_PWM_COUNT] = {4,7,8,12};
-
-pwmPin myPWMpins[SOFT_PWM_COUNT];
-
-// function to "setup" the sw pwm pin states
-void setup_soft_pwm(void)
+// function to initialize the sw pwm pins
+void soft_pwm_init(unsigned char init_value)
 {
-  unsigned char index = 0;
-  for (index=0; index < SOFT_PWM_COUNT; index++) {
-    myPWMpins[index].pin = pins[index];
- 
-    // mix it up a little bit
-    // changes the starting pwmValue for odd and even
-    myPWMpins[index].pwmValue = 50;
-    
-    myPWMpins[index].pinState = ON;
-    myPWMpins[index].pwmTickCount = 0;
- 
-    // unlike analogWrite(), this is necessary
-    pinMode(pins[index], OUTPUT);
+  unsigned char i, pwm;
+  pwm = init_value;
+  for (i = 0; i < SOFT_PWM_CHMAX; i++) // initialise all channels
+  {
+    pwm_width[i]  = pwm; // set default PWM values
+    pwm_width_buffer[i] = pwm; // set default PWM values
   }
+  pinMode(pins[0], OUTPUT_PIN);
+  pinMode(pins[1], OUTPUT_PIN);
+  pinMode(pins[2], OUTPUT_PIN);
+  pinMode(pins[3], OUTPUT_PIN);
+  pinMode(13, OUTPUT_PIN);
+  digitalWrite(pins[0],LED_OFF);
+  digitalWrite(pins[1],LED_OFF);
+  digitalWrite(pins[2],LED_OFF);
+  digitalWrite(pins[3],LED_OFF);
 }
 
-void handle_soft_pwm(void) {
-  currentMicros = micros();
-  // check to see if we need to increment our PWM counters yet
-  if (currentMicros - previousMicros >= microInterval) {
-    // Increment each pin's counter
-    for (int index=0; index < pinCount; index++) {
-    // each pin has its own tickCounter
-      myPWMpins[index].pwmTickCount++;
- 
-    // determine if we're counting on or off time
-      if (myPWMpins[index].pinState == ON) {
-        // see if we hit the desired on percentage
-        // not as precise as 255 or 1024, but easier to do math
-        if (myPWMpins[index].pwmTickCount >= myPWMpins[index].pwmValue) 
-        {
-          myPWMpins[index].pinState = OFF;
-        }
-      } 
-      else 
-      {
-        // if it isn't on, it is off
-        if (myPWMpins[index].pwmTickCount >= pwmMax) 
-        {
-          myPWMpins[index].pinState = ON;
-          myPWMpins[index].pwmTickCount = 0;
-        }
-      }
-      // could probably use some bitwise optimization here, digitalWrite()
-      // really slows things down after 10 pins.
-      digitalWrite(myPWMpins[index].pin, !myPWMpins[index].pinState);
+static void soft_pwm_update(void)
+{
+  static unsigned char softcount = 0x00;
+  //softcount = (softcount + 1) % 100;
+  softcount++;
+  if (softcount == 0)
+  //verbose code for speed, do not replace with for...
+  //last element should equal SOFT_PWM_CHMAX - 1
+  {
+    pwm_width[0] = pwm_width_buffer[0]; 
+    pwm_width[1] = pwm_width_buffer[1];
+    pwm_width[2] = pwm_width_buffer[2];
+    pwm_width[3] = pwm_width_buffer[3];
+    //if duty cycle width > 0 condition is evaluated as true = 1
+    //else condition is evaluated as false = 0
+    #if RGB_NEGATIVE_LOGIC
+    digitalWrite(pins[0],!(pwm_width[0] > 0));
+    digitalWrite(pins[1],!(pwm_width[1] > 0));
+    digitalWrite(pins[2],!(pwm_width[2] > 0));
+    //digitalWrite(pins[3],!(pwm_width[3] > 0));
+    digitalWrite(pins[3],LED_ON);
+    #else
+    digitalWrite(pins[0],(pwm_width[0] > 0));
+    digitalWrite(pins[1],(pwm_width[1] > 0));
+    digitalWrite(pins[2],(pwm_width[2] > 0));
+    digitalWrite(pins[3],(pwm_width[3] > 0)); 
+    #endif  //RGB_NEGATIVE_LOGIC
+  }
+  /*else
+  {*/
+    // clear port pin on pwm_width match
+    if (pwm_width[0] == softcount)
+    {
+      digitalWrite(pins[0],LED_OFF);
     }
+    if (pwm_width[1] == softcount)
+    {
+      digitalWrite(pins[1],LED_OFF);
+    }
+    if (pwm_width[2] == softcount)
+    {
+      digitalWrite(pins[2],LED_OFF);
+    }
+    if (pwm_width[3] == softcount)
+    {
+      digitalWrite(pins[2],LED_OFF);
+    }    
+  //}
+}
+
+void soft_pwm_handler(void) 
+{
+  unsigned long currentMicros = micros();
+  static unsigned long previousMicros = 0;
+  //currentMicros = micros();
+  // check to see if we need to increment our PWM counters yet
+  if (currentMicros - previousMicros >= SOFT_PWM_INTERVAL)
+  {
+    soft_pwm_update();
     // reset the micros() tick counter.
     digitalWrite(13, !digitalRead(13));
     previousMicros = currentMicros;

@@ -44,10 +44,12 @@ void setup()
   led_setup();
   switch_setup();
   
-  setup_soft_pwm();
   //Make first analog read to initialize old_pot since initial POT position is unknown
   pot_value = analogRead(POT1);
   old_pot = pot_value;
+
+  //init soft pwm with current pot value
+  soft_pwm_init(pot_value/4);
 
   //start serial port
   Serial.begin(9600);
@@ -165,4 +167,5 @@ void loop()
       break;
     }
   }
+  soft_pwm_handler();
 }

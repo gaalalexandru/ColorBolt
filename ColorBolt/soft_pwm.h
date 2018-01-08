@@ -6,7 +6,8 @@
 extern "C" {
 #endif
 
-void 
+void soft_pwm_init(unsigned char init_value);
+void soft_pwm_handler(void);
 
 #ifdef __cplusplus
 } // extern "C"
