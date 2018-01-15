@@ -4,38 +4,90 @@
  * 2017.12.12
  */
 
-// Include & Defines secion
+// Include & Defines section
+#include "config.h"
 #include "led.h"
-#include "soft_pwm.h"
-
-//Pin mapping for switches and pot
-#define SWITCH1 (3)
-#define SWITCH2 (2)
-#define POT1    (A7)
-
-//General configurations
-#define NR_OF_MODES  (3)
-//0 = off, 1 = on, 2 = blink
-#define NR_OF_COLORS  (8)
-//0 = off, 1 = red, 2 = green
-//3 = blue, 4 = yellow, 5 = pink
-//6 = cyan, 7 = white
-#define DEFAULT_COLOR (7)  //white
-#define MODE_OFF  (0)
-#define MODE_ON (1)
-#define MODE_BLINK (2)
-#define POT_FILTER_LIMIT (10)
-#define DEBOUNCE_DELAY (100)
 
 //Global variable declarations
 int old_pot = 0;  //needs to be signed due to filtering
 int pot_value = 0;  //needs to be signed due to filtering
+volatile unsigned char pwm_width[SOFT_PWM_CHMAX];
+volatile unsigned char pwm_width_buffer[SOFT_PWM_CHMAX];
+const unsigned char pins[SOFT_PWM_CHMAX] = {4,7,8,12}; //Blue3 , Blue2, Green2, Red2
 
 //Function declarations, static functions are visible only in this file
 static void switch_setup(void)
 {
   pinMode(SWITCH1, INPUT_PULLUP);
   pinMode(SWITCH2, INPUT_PULLUP);
+}
+void soft_pwm_init(unsigned char init_value)
+{
+  unsigned char i, pwm;
+  pwm = init_value;
+  for (i = 0; i < SOFT_PWM_CHMAX; i++) // initialise all channels
+  {
+    pwm_width[i]  = pwm; // set default PWM values
+    pwm_width_buffer[i] = pwm; // set default PWM values
+  }
+  pinMode(pins[0], OUTPUT);
+  pinMode(pins[1], OUTPUT);
+  pinMode(pins[2], OUTPUT);
+  pinMode(pins[3], OUTPUT);
+  
+  digitalWrite(pins[0],LED_OFF);
+  digitalWrite(pins[1],LED_OFF);
+  digitalWrite(pins[2],LED_OFF);
+  digitalWrite(pins[3],LED_OFF);
+}
+static void soft_pwm_update(void)
+{
+  static unsigned char softcount = 0x00;
+  //softcount = (softcount + 1) % 100;
+  softcount++;
+  if (softcount == 0)
+  //verbose code for speed, do not replace with for...
+  //last element should equal SOFT_PWM_CHMAX - 1
+  {
+    pwm_width[0] = pwm_width_buffer[0]; 
+    pwm_width[1] = pwm_width_buffer[1];
+    pwm_width[2] = pwm_width_buffer[2];
+    pwm_width[3] = pwm_width_buffer[3];
+    //if duty cycle width > 0 condition is evaluated as true = 1
+    //else condition is evaluated as false = 0
+    #if RGB_NEGATIVE_LOGIC
+    digitalWrite(pins[0],(pwm_width[0] == 255));
+    digitalWrite(pins[1],(pwm_width[1] == 255));
+    digitalWrite(pins[2],(pwm_width[2] == 255));
+    digitalWrite(pins[3],(pwm_width[3] == 255));
+    //digitalWrite(pins[3],LED_ON);
+    #else
+    digitalWrite(pins[0],LED_ON);
+    digitalWrite(pins[1],LED_ON);
+    digitalWrite(pins[2],LED_ON);
+    digitalWrite(pins[3],LED_ON); 
+    #endif  //RGB_NEGATIVE_LOGIC
+  }
+  /*else
+  {*/
+    // clear port pin on pwm_width match
+    if (pwm_width[0] == softcount)
+    {
+      digitalWrite(4,LED_OFF);
+    }
+    if (pwm_width[1] == softcount)
+    {
+      digitalWrite(7,LED_OFF);
+    }
+    if (pwm_width[2] == softcount)
+    {
+      digitalWrite(8,LED_OFF);
+    }
+    if (pwm_width[3] == softcount)
+    {
+      digitalWrite(12,LED_OFF);
+    }    
+  //}
 }
 
 void setup() 
@@ -120,7 +172,10 @@ void loop()
   
   //Reading of potentiometer (analog) value
   pot_value = analogRead(POT1);
-  
+  if(pot_value > 1016) 
+  {
+    pot_value = 1016;
+  }
   if(//Start LED processing if one of the following conditions are TRUE:
      //1. If mode or color changes, it's necesary for new LED processing
      (old_mode != mode_select)||(old_color != color_select)||
@@ -141,7 +196,7 @@ void loop()
     {
       case(MODE_OFF):
         //power value is not relevant
-        led_control(color_select, 0, 255);
+        led_control(color_select, 0, 254);
       break;
   
       case(MODE_ON):
@@ -157,7 +212,7 @@ void loop()
         if((millis() - blink_timestamp) >= pot_value)
         {
           blink_timestamp = millis();
-          led_control(color_select, temp_mode, 255);
+          led_control(color_select, temp_mode, 250);
           temp_mode ^= 1;
         }
       break;
@@ -167,5 +222,20 @@ void loop()
       break;
     }
   }
-  soft_pwm_handler();
+  //soft_pwm_handler();
+  unsigned long currentMicros = micros();
+  static unsigned char status_led = 0;
+  static unsigned long previousMicros = 0;
+  //currentMicros = micros();
+  // check to see if we need to increment our PWM counters yet
+  /*
+  if (currentMicros - previousMicros >= SOFT_PWM_INTERVAL)
+  {
+    
+    // reset the micros() tick counter.
+    digitalWrite(13, status_led);
+    status_led ^= 1;
+    previousMicros = currentMicros;
+  }*/
+  soft_pwm_update();
 }

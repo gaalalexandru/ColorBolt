@@ -1,5 +1,4 @@
 #include "led.h"
-#include "soft_pwm.h"
 #include "config.h"
 
 extern volatile unsigned char pwm_width_buffer[SOFT_PWM_CHMAX];
@@ -9,7 +8,7 @@ static void set_led_red(unsigned char led_power)
 {
   #if ANALOG_LED_CONTROL
     #if USE_SOFT_PWM
-      pwm_width_buffer[3] = 127;
+      pwm_width_buffer[3] = 255 - led_power;
     #else
       analogWrite(RED1,led_power);
     #endif  //USE_SOFT_PWM
@@ -25,7 +24,7 @@ static void set_led_green(unsigned char led_power)
   #if ANALOG_LED_CONTROL
     analogWrite(GREEN1,led_power);
     #if USE_SOFT_PWM
-      pwm_width_buffer[2] = 127;
+      pwm_width_buffer[2] = 255 - led_power;
     #else  
       analogWrite(GREEN2,led_power);
     #endif  //USE_SOFT_PWM
@@ -40,8 +39,8 @@ static void set_led_blue(unsigned char led_power)
   #if ANALOG_LED_CONTROL
     analogWrite(BLUE1,led_power);
     #if USE_SOFT_PWM
-      pwm_width_buffer[1] = 127;
-      pwm_width_buffer[0] = 127;
+      pwm_width_buffer[1] = 255 - led_power;
+      pwm_width_buffer[0] = 255 - led_power;
     #else       
       analogWrite(BLUE2,led_power); 
       analogWrite(BLUE3,led_power);
@@ -64,10 +63,18 @@ void led_setup(void)
 
 void set_all_leds(unsigned char led_state)
 {
+  /*
   unsigned char index = 0;
   for(index = BLUE3; index <= RED1; index ++)
   {
     digitalWrite(index,led_state);
+  }
+  */
+  if(led_state == LED_OFF)
+  {
+    set_led_red(255);
+    set_led_green(255);
+    set_led_blue(255);
   }
 }
 
@@ -96,42 +103,49 @@ void led_control(unsigned char color, unsigned char led_mode, unsigned char led_
     switch(color)
     {
       case COLOR_RED:
-        set_all_leds(LED_OFF);
-        //Serial.println("red");
+        //set_all_leds(LED_OFF);
         set_led_red(led_power);
+        set_led_green(255);
+        set_led_blue(255);
       break;
       
       case COLOR_GREEN:
-        set_all_leds(LED_OFF);
-        //Serial.println("green");
+        //set_all_leds(LED_OFF);
+        set_led_red(255);
         set_led_green(led_power);
+        set_led_blue(255);
       break;
       
       case COLOR_BLUE:
-        set_all_leds(LED_OFF);
+        //set_all_leds(LED_OFF);
+        set_led_red(255);
+        set_led_green(255);
         set_led_blue(led_power);
       break;
   
       case COLOR_YELLOW:
-        set_all_leds(LED_OFF);
+        //set_all_leds(LED_OFF);
         set_led_red(led_power);
         set_led_green(led_power);
+        set_led_blue(255);        
       break;
   
       case COLOR_PINK:
-        set_all_leds(LED_OFF);
+        //set_all_leds(LED_OFF);
         set_led_red(led_power);
+        set_led_green(255);
         set_led_blue(led_power);
       break;
   
       case COLOR_CYAN:
-        set_all_leds(LED_OFF);
+        //set_all_leds(LED_OFF);
+        set_led_red(255);
         set_led_green(led_power);
         set_led_blue(led_power);
       break;
 
       case COLOR_WHITE:
-        set_all_leds(LED_ON);
+        //set_all_leds(LED_ON);
         set_led_red(led_power);
         set_led_green(led_power);
         set_led_blue(led_power);
@@ -139,7 +153,9 @@ void led_control(unsigned char color, unsigned char led_mode, unsigned char led_
       
       default:
         //set_all_leds(LED_OFF);
-        //Serial.println("Undefined color!");
+        set_led_red(255);
+        set_led_green(255);
+        set_led_blue(255);
       break;
     }
   }

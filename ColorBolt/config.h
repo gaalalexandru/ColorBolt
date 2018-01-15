@@ -6,7 +6,10 @@
 extern "C" {
 #endif
 
-#define OUTPUT_PIN (1)
+//Pin mapping for switches and pot
+#define SWITCH1 (3)
+#define SWITCH2 (2)
+#define POT1    (A7)
 
 //Pin mapping for LEDs
 #define RED1    (12)
@@ -18,6 +21,20 @@ extern "C" {
 #define RED3    (6)
 #define GREEN3  (5)
 #define BLUE3   (4)
+
+//General configurations
+#define NR_OF_MODES  (3)
+//0 = off, 1 = on, 2 = blink
+#define NR_OF_COLORS  (8)
+//0 = off, 1 = red, 2 = green
+//3 = blue, 4 = yellow, 5 = pink
+//6 = cyan, 7 = white
+#define DEFAULT_COLOR (7)  //white
+#define MODE_OFF  (0)
+#define MODE_ON (1)
+#define MODE_BLINK (2)
+#define POT_FILTER_LIMIT (10)
+#define DEBOUNCE_DELAY (100)
 
 //Color codes
 #define COLOR_RED 1
@@ -45,7 +62,7 @@ extern "C" {
 #define SOFT_PWM_CHMAX (4)
 //This is the frequency of the sw PWM
 //Frequency = 1/(2 * SOFT_PWM_INTERVAL)
-#define SOFT_PWM_INTERVAL (50)  //micro seconds
+#define SOFT_PWM_INTERVAL (1)  //micro seconds
 
 #ifdef __cplusplus
 } // extern "C"
