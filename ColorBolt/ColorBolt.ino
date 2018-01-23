@@ -56,12 +56,10 @@ static void soft_pwm_update(void)
     //if duty cycle width > 0 condition is evaluated as true = 1
     //else condition is evaluated as false = 0
     #if RGB_NEGATIVE_LOGIC
-    //digitalWrite(pins[0],(pwm_width[0] == 255));
-    //digitalWrite(pins[1],(pwm_width[1] == 255));
-    //digitalWrite(pins[2],(pwm_width[2] == 255));
-    //digitalWrite(pins[3],(pwm_width[3] == 255));
-    PORTB &= ((1<<4)|(1<<0));
-    PORTD &= ((1<<4)|(1<<7));
+    digitalWrite(pins[0],(pwm_width[0] == 255));
+    digitalWrite(pins[1],(pwm_width[1] == 255));
+    digitalWrite(pins[2],(pwm_width[2] == 255));
+    digitalWrite(pins[3],(pwm_width[3] == 255));
     //digitalWrite(pins[3],LED_ON);
     #else
     digitalWrite(pins[0],LED_ON);
@@ -75,23 +73,19 @@ static void soft_pwm_update(void)
     // clear port pin on pwm_width match
     if (pwm_width[0] == softcount)
     {
-      //digitalWrite(4,LED_OFF);
-      PORTD |= (1<<4);
+      digitalWrite(4,LED_OFF);
     }
     if (pwm_width[1] == softcount)
     {
-      //digitalWrite(7,LED_OFF);
-      PORTD |= (1<<7);
+      digitalWrite(7,LED_OFF);
     }
     if (pwm_width[2] == softcount)
     {
-      //digitalWrite(8,LED_OFF);
-      PORTB |= (1<<0);
+      digitalWrite(8,LED_OFF);
     }
     if (pwm_width[3] == softcount)
     {
-      //digitalWrite(12,LED_OFF);
-      PORTB |= (1<<4);
+      digitalWrite(12,LED_OFF);
     }    
   //}
 }
