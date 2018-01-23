@@ -59,7 +59,7 @@ extern "C" {
 //Soft pwm config
 #define USE_SOFT_PWM (1)
 //Number of pins that need software pwm
-#define SOFT_PWM_CHMAX (4)
+#define SOFT_PWM_CHMAX (9)
 //This is the frequency of the sw PWM
 //Frequency = 1/(2 * SOFT_PWM_INTERVAL)
 #define SOFT_PWM_INTERVAL (1)  //micro seconds

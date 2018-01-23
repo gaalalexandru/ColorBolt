@@ -13,7 +13,7 @@ int old_pot = 0;  //needs to be signed due to filtering
 int pot_value = 0;  //needs to be signed due to filtering
 volatile unsigned char pwm_width[SOFT_PWM_CHMAX];
 volatile unsigned char pwm_width_buffer[SOFT_PWM_CHMAX];
-const unsigned char pins[SOFT_PWM_CHMAX] = {4,7,8,12}; //Blue3 , Blue2, Green2, Red2
+const unsigned char pins[SOFT_PWM_CHMAX] = {4,5,6,7,8,9,10,11,12}; //Blue3 , Blue2, Green2, Red2
 
 //Function declarations, static functions are visible only in this file
 static void switch_setup(void)
@@ -34,16 +34,17 @@ void soft_pwm_init(unsigned char init_value)
   pinMode(pins[1], OUTPUT);
   pinMode(pins[2], OUTPUT);
   pinMode(pins[3], OUTPUT);
-  
-  digitalWrite(pins[0],LED_OFF);
-  digitalWrite(pins[1],LED_OFF);
-  digitalWrite(pins[2],LED_OFF);
-  digitalWrite(pins[3],LED_OFF);
+  pinMode(pins[4], OUTPUT);
+  pinMode(pins[5], OUTPUT);
+  pinMode(pins[6], OUTPUT);
+  pinMode(pins[7], OUTPUT);
+  pinMode(pins[8], OUTPUT);
+  PORTB |= (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3) | (1 << 4);  //PB0 - 4
+  PORTD |= (1 << 4) | (1 << 5)| (1 << 6)| (1 << 7);  //PD4 - 7
 }
 static void soft_pwm_update(void)
 {
   static unsigned char softcount = 0x00;
-  //softcount = (softcount + 1) % 100;
   softcount++;
   if (softcount == 0)
   //verbose code for speed, do not replace with for...
@@ -53,19 +54,17 @@ static void soft_pwm_update(void)
     pwm_width[1] = pwm_width_buffer[1];
     pwm_width[2] = pwm_width_buffer[2];
     pwm_width[3] = pwm_width_buffer[3];
+    pwm_width[4] = pwm_width_buffer[4];
+    pwm_width[5] = pwm_width_buffer[5]; 
+    pwm_width[6] = pwm_width_buffer[6];
+    pwm_width[7] = pwm_width_buffer[7];
+    pwm_width[8] = pwm_width_buffer[8];
+
     //if duty cycle width > 0 condition is evaluated as true = 1
     //else condition is evaluated as false = 0
     #if RGB_NEGATIVE_LOGIC
-    digitalWrite(pins[0],(pwm_width[0] == 255));
-    digitalWrite(pins[1],(pwm_width[1] == 255));
-    digitalWrite(pins[2],(pwm_width[2] == 255));
-    digitalWrite(pins[3],(pwm_width[3] == 255));
-    //digitalWrite(pins[3],LED_ON);
-    #else
-    digitalWrite(pins[0],LED_ON);
-    digitalWrite(pins[1],LED_ON);
-    digitalWrite(pins[2],LED_ON);
-    digitalWrite(pins[3],LED_ON); 
+    PORTB &= ~((1 << 0) | (1 << 1) | (1 << 2) | (1 << 3) | (1 << 4));  //PB0 - 4
+    PORTD &= ~((1 << 4) | (1 << 5)| (1 << 6)| (1 << 7));  //PD4 - 7
     #endif  //RGB_NEGATIVE_LOGIC
   }
   /*else
@@ -73,27 +72,63 @@ static void soft_pwm_update(void)
     // clear port pin on pwm_width match
     if (pwm_width[0] == softcount)
     {
-      digitalWrite(4,LED_OFF);
+      PORTD |= (1 << 4);
     }
     if (pwm_width[1] == softcount)
     {
-      digitalWrite(7,LED_OFF);
+      PORTD |= (1 << 5);
     }
     if (pwm_width[2] == softcount)
     {
-      digitalWrite(8,LED_OFF);
+      PORTD |= (1 << 6);      
     }
     if (pwm_width[3] == softcount)
     {
-      digitalWrite(12,LED_OFF);
-    }    
+      PORTD |= (1 << 7);     
+    }
+    
+    if (pwm_width[4] == softcount)
+    {
+      PORTB |= (1 << 0);      
+    }
+    if (pwm_width[5] == softcount)
+    {
+      PORTB |= (1 << 1);       
+    }
+    if (pwm_width[6] == softcount)
+    {
+      PORTB |= (1 << 2);       
+    }
+    if (pwm_width[7] == softcount)
+    {
+      PORTB |= (1 << 3);       
+    }
+    if (pwm_width[8] == softcount)
+    {
+      PORTB |= (1 << 4);      
+    }
   //}
+  digitalWrite(13,!digitalRead(13));
+}
+void timer_setup(void)
+{
+//set timer1 interrupt at 1Hz
+  TCCR1A = 0;// set entire TCCR1A register to 0
+  TCCR1B = 0;// same for TCCR1B
+  TCNT1  = 0;//initialize counter value to 0
+  // set compare match register for 1hz increments
+  OCR1A = 50;// = (16*10^6) / (1*1024) - 1 (must be <65536)
+  // turn on CTC mode
+  TCCR1B |= (1 << WGM12);
+  // Set CS12 and CS10 bits for 1024 prescaler
+  TCCR1B |= /*(1 << CS12) | */(1 << CS11);  
+  // enable timer compare interrupt
+  TIMSK1 |= (1 << OCIE1A);
 }
 
 void setup() 
 {
-  //setup digital pins
-  led_setup();
+  //setup digital pins for the switch input
   switch_setup();
   
   //Make first analog read to initialize old_pot since initial POT position is unknown
@@ -106,10 +141,16 @@ void setup()
   //start serial port
   Serial.begin(9600);
   Serial.println("Setup ready!");
+  cli();
+  timer_setup();
+  sei();
+  pinMode(13,OUTPUT);
+  Serial.println("Interrupt initialized!");
 }
 
 void loop() 
 {
+  //Serial.println(millis());
   //local variable declarations
   unsigned char sw1_read = 1;
   unsigned char sw2_read = 0;
@@ -223,9 +264,9 @@ void loop()
     }
   }
   //soft_pwm_handler();
-  unsigned long currentMicros = micros();
-  static unsigned char status_led = 0;
-  static unsigned long previousMicros = 0;
+//  unsigned long currentMicros = micros();
+//  static unsigned char status_led = 0;
+//  static unsigned long previousMicros = 0;
   //currentMicros = micros();
   // check to see if we need to increment our PWM counters yet
   /*
@@ -237,5 +278,10 @@ void loop()
     status_led ^= 1;
     previousMicros = currentMicros;
   }*/
-  soft_pwm_update();
 }
+ISR(TIMER1_COMPA_vect)
+{
+
+  soft_pwm_update();  
+}
+
