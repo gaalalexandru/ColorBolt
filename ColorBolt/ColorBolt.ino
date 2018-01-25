@@ -29,15 +29,14 @@ void setup()
   pot_value = analogRead(POT1);
   old_pot = pot_value;
 
+  //led_setup();
   //init soft pwm with current pot value
   soft_pwm_init(pot_value/4);
-
-
-
   //setup timer for softpwm
-  cli();
+  cli();  //disable all interrupts
   timer_setup();
-  sei();
+  sei();  //enable all interrupts
+  
   //start serial port
   Serial.begin(9600);
   Serial.println("Setup ready!");

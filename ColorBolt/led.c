@@ -26,7 +26,13 @@ static void set_led_blue(unsigned char led_power)
 }
 
 //external function definitions (used in other modules / files)
-void led_setup(void){}
+
+void led_setup(void)
+{
+  //nothing to do, all initializations are done in 
+  //soft_pwm_init and timer_setup functions
+}
+
 void set_all_leds(unsigned char led_state){}
 
 void led_control(unsigned char color, unsigned char led_mode, unsigned char led_power)

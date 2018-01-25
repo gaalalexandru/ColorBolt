@@ -6,9 +6,9 @@
 extern "C" {
 #endif
 
-#define TIMER1_INTERRUPT(); ISR(TIMER1_COMPA_vect) { soft_pwm_update(); }
+#define TIMER1_INTERRUPT(); ISR(TIMER1_COMPA_vect) { soft_pwm_update(); digitalWrite(13,!digitalRead(13)); }
 
-//void led_setup(void);
+//
 //void set_all_leds(unsigned char led_state);
 //void led_control(unsigned char color, unsigned char led_mode, unsigned char led_power);
 void timer_setup(void);
